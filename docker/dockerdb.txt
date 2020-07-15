@@ -4,3 +4,4 @@ db.createUser({ user: "[username]", pwd: "[password]", roles: [ { role: "userAdm
 docker stop officedb
 docker start officedb
 
+docker build -t officepy -f docker/officepy.docker ./docker
