@@ -4,7 +4,7 @@ RUN ln -sf /usr/share/zoneinfo/America/New_York /etc/localtime
 
 RUN pip install pymongo
 RUN pip install requests
-RUN pip install serial
+RUN pip install pyserial
 
 WORKDIR /working
 
