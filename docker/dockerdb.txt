@@ -1,0 +1,6 @@
+docker run -d --name officedb -v /home/bvanbeynum/OfficeFan/data/db:/data/db -p 9501:27017 andresvidal/rpi3-mongodb3:latest mongod --auth
+docker exec -it officedb mongo admin
+db.createUser({ user: "[username]", pwd: "[password]", roles: [ { role: "userAdminAnyDatabase", db: "admin" } ] })
+docker stop officedb
+docker start officedb
+
