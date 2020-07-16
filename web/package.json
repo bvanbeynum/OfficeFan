@@ -1,0 +1,12 @@
+{
+  "name": "OfficeWeb",
+  "version": "0.0.1",
+  "description": "",
+  "main": "server.js",
+  "repository": "",
+  "author": "Brett van Beynum <maildrop444@gmail.com>",
+  "dependencies": {
+    "express": "^4.17.1",
+    "mongoose": "^5.7.5"
+  }
+}
