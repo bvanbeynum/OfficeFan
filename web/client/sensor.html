@@ -1,0 +1,232 @@
+<html ng-app="sensorApp">
+<head>
+<title>Training</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+
+html {
+	font-family: verdana;
+	font-size: .85em;
+}
+
+.popupMessage {
+	position: absolute;
+	font-weight: bold;
+	bottom: 3%;
+	left: 3%;
+	padding: 8px 15px;
+	display: none;
+}
+.popupMessage.isActive {
+	display: flex;
+}
+.popupMessage.info {
+	border: solid 2px rgb(79, 116, 128);
+	background-color: rgb(152, 188, 255);
+	color: rgb(79, 116, 128);
+}
+.popupMessage.error {
+	border: solid 2px rgb(220, 80, 80);
+	background-color: rgb(244, 174, 174);
+	color: rgb(222, 23, 23);
+}
+
+.container {
+	display: flex;
+}
+
+sensorchart {
+	width: 1024px;
+	height: 500px;
+}
+
+sensorchart text {
+	stroke: none;
+}
+
+sensorchart path, sensorchart line {
+	stroke-width: 2px;
+	stroke: rgb(85, 126, 181);
+	fill: none;
+}
+
+sensorchart .temp, 
+sensorchart .temp path, 
+sensorchart .temp line {
+	stroke: rgb(10, 146, 11);
+}
+
+sensorchart .humidity, 
+sensorchart .humidity path, 
+sensorchart .humidity line {
+	stroke: rgb(228, 151, 8);
+}
+
+sensorchart line.light {
+	stroke-width: 3px;
+	stroke: rgb(241, 241, 104)
+}
+
+</style>
+</head>
+<body ng-controller="sensorCtl">
+
+<div class="container">
+	<sensorchart controller="sensorChartCtl"></sensorchart>
+</div>
+
+<div class="popupMessage" ng-class="[message.type, { 'isActive': message.active } ]">
+	{{message.text}}
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.9/angular.min.js"></script>
+<script src="https://d3js.org/d3.v5.min.js"></script>
+
+<script>
+/* global angular */
+/* global d3 */
+
+var log = {},
+	sensorApp = angular.module("sensorApp", []);
+
+sensorApp.controller("sensorCtl", ($scope, $http, $window) => {
+	log.scope = $scope;
+	log.http = $http;
+	
+	$scope.sensorData = [];
+	$scope.message = { text: "", active: false };
+	$scope.sensorChartCtl = {};
+	
+	$scope.loadData = function () {
+		$http({ url: "/api/sensorload" }).then(
+			(response) => {
+				$scope.sensorData = response.data.sensor.map((sensor) => {
+					var logTime = new Date(sensor.logTime);
+					logTime.setMinutes(logTime.getMinutes() + logTime.getTimezoneOffset());
+					
+					return {
+						id: sensor.id,
+						logTime: logTime,
+						temp: sensor.temp,
+						humidity: sensor.humidity,
+						isLightOn: sensor.isLightOn
+					};
+				});
+				
+				$scope.sensorChartCtl.update($scope.sensorData);
+				$scope.showMessage("info", "Data has been updated");
+			},
+			(error) => {
+				$scope.showMessage("error", "There was an error loading data");
+				console.warn("Warning", error);
+			});
+		
+	};
+	
+	$scope.showMessage = (type, message) => {
+		$scope.message.text = message;
+		$scope.message.active = true;
+		$scope.message.type = type;
+		
+		setTimeout(() => {
+			$scope.message.active = false;
+			$scope.message.text = "";
+			$scope.message.type = "";
+			$scope.$apply();
+		}, 4000);
+	};
+	
+	$scope.loadData();
+	setInterval($scope.loadData, 60000);
+});
+
+sensorApp.directive("sensorchart", () => {
+	return {
+		restrict: "E"
+		, scope: {
+			controller: "="
+		},
+		link: (scope, element) => {
+			if (!scope.controller) return;
+			
+			scope.controller.update = (data) => {
+				var size = {width: element[0].offsetWidth, height: element[0].offsetHeight },
+					padding = { left: 50, right: 50, top: 0, bottom: 25, bands: .75 },
+					chartSize = { width: size.width - padding.left - padding.right, height: size.height - padding.top - padding.bottom },
+					convert = { y1: d3.scaleLinear(), y2: d3.scaleLinear(), x: d3.scaleTime() };
+				
+				convert.y1.domain([
+					(d3.max(data, (record) => { return record.temp; })) + 10,
+					(d3.min(data, (record) => { return record.temp; })) - 10
+					]);
+				convert.y1.range([0, chartSize.height]);
+				
+				convert.y2.domain([
+					(d3.max(data, (record) => { return record.humidity; })) + 10,
+					(d3.min(data, (record) => { return record.humidity; })) - 10
+					]);
+				convert.y2.range([0, chartSize.height]);
+				
+				convert.x.domain(d3.extent(data, (record) => { return record.logTime; }));
+				convert.x.range([0, chartSize.width]);
+				
+				d3.select(element[0])
+					.selectAll("*")
+					.remove();
+				
+				var svg = d3.select(element[0])
+					.append("svg")
+					.attr("width", size.width)
+					.attr("height", size.height);
+				
+				var chart = svg.append("g")
+					.attr("transform", "translate(" + padding.left + ", " + padding.top + ")");
+				
+				chart.append("path")
+					.datum(data)
+					.attr("class", "path temp")
+					.attr("d", d3.line()
+						.x((record) => { return convert.x(record.logTime); })
+						.y((record) => { return convert.y1(record.temp); })
+					);
+				
+				chart.append("path")
+					.datum(data)
+					.attr("class", "path humidity")
+					.attr("d", d3.line()
+						.x((record) => { return convert.x(record.logTime); })
+						.y((record) => { return convert.y2(record.humidity); })
+					);
+				
+				chart.selectAll(".light")
+					.data(data.filter((record) => { return record.isLightOn; }))
+					.enter()
+					.append("line")
+					.attr("class", "light")
+					.attr("x1", (record) => { return convert.x(record.logTime); })
+					.attr("y1", chartSize.height - 15)
+					.attr("x2", (record) => { return convert.x(record.logTime); })
+					.attr("y2", chartSize.height - 5);
+				
+				chart.append("g")
+					.attr("class", "axis")
+					.attr("transform", "translate(0, " + chartSize.height + ")")
+					.call(d3.axisBottom(convert.x));
+				
+				chart.append("g")
+					.attr("class", "axis temp")
+					.call(d3.axisLeft(convert.y1));
+				
+				chart.append("g")
+					.attr("class", "axis humidity")
+					.attr("transform", "translate(" + chartSize.width + ")")
+					.call(d3.axisRight(convert.y2));
+				
+			};
+		}
+	};
+});
+
+</script>
+</body>
+</html>
