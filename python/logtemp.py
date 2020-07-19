@@ -11,5 +11,5 @@ arduino = serial.Serial(port, 9600)
 while True:
 	data = json.loads(arduino.readline())
 	data["logTime"] = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
-	requests.post("http://huntingtonbeach.beynum.com/uploadvideo", json = { "sensor": data })
+	requests.post("http://huntingtonbeach.beynum.com:8081/api/savesensor", json = { "sensor": data })
 	time.sleep(60)
