@@ -11,5 +11,8 @@ docker build -t officepy -f docker/officepy.docker ./docker
 *********************************** Office Web
 docker run -d -p 8081:8080 -v /home/bvanbeynum/OfficeFan/web:/usr/src/web --name OfficeWeb node:latest node /usr/src/web/server.js
 
+*********************************** Office Web Testing
+sudo docker run --rm -it --privileged -v /home/bvanbeynum/OfficeFan/python:/working officepy
+
 *********************************** Huntington Beach DB
 docker run -d -p 9502:27017 -v /home/bvanbeynum/data/db:/data/db:Z --name huntingtonbeachdb mongo --nojournal --auth
