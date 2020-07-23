@@ -20,7 +20,10 @@ var sensorModel = mongoose.model("sensor", {
 	logTime: Date,
 	temp: Number,
 	humidity: Number,
-	isLightOn: Boolean
+	isLightOn: Boolean,
+	hasDoorChange: Boolean,
+	isDoorOpen: Boolean,
+	hasMotion: Boolean
 });
 
 // Routes =======================================================================
@@ -36,7 +39,10 @@ app.post("/api/savesensor", (request, response) => {
 		logTime: new Date(request.body.sensor.logTime),
 		temp: request.body.sensor.temp,
 		humidity: request.body.sensor.humidity,
-		isLightOn: request.body.sensor.light == 1 ? true : false
+		isLightOn: request.body.sensor.light == 1 ? true : false,
+		hasDoorChange: request.body.sensor.doorChange == 1 ? true : false,
+		isDoorOpen: request.body.sensor.isDoorOpen == 1 ? true : false,
+		hasMotion: request.body.sensor.motion == 1 ? true : false
 	})
 	.save()
 	.then((sensorDB) => {
@@ -65,7 +71,10 @@ app.get("/api/sensorload", (request, response) => {
 					logTime: sensorDb.logTime,
 					temp: sensorDb.temp,
 					humidity: sensorDb.humidity,
-					isLightOn: sensorDb.isLightOn || false
+					isLightOn: sensorDb.isLightOn || false,
+					hasDoorChange: sensorDb.hasDoorChange || false,
+					isDoorOpen: sensorDb.isDoorOpen || false,
+					hasMotion: sensorDb.hasMotion || false
 				};
 			});
 			

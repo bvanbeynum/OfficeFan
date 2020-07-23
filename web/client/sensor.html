@@ -63,8 +63,19 @@ sensorchart .humidity line {
 }
 
 sensorchart line.light {
-	stroke-width: 3px;
+	stroke-width: 4px;
 	stroke: rgb(241, 241, 104)
+}
+
+sensorchart line.doorStatus {
+	stroke-width: 4px;
+	stroke: rgb(255, 148, 148);
+}
+
+sensorchart .doorEvent {
+	stroke-width: 3px;
+	stroke: rgb(0, 0, 0);
+	fill: none;
 }
 
 </style>
@@ -109,7 +120,10 @@ sensorApp.controller("sensorCtl", ($scope, $http, $window) => {
 						logTime: logTime,
 						temp: sensor.temp,
 						humidity: sensor.humidity,
-						isLightOn: sensor.isLightOn
+						isLightOn: sensor.isLightOn,
+						hasDoorChange: sensor.hasDoorChange,
+						isDoorOpen: sensor.isDoorOpen,
+						hasMotion: sensor.hasMotion
 					};
 				});
 				
@@ -198,15 +212,43 @@ sensorApp.directive("sensorchart", () => {
 						.y((record) => { return convert.y2(record.humidity); })
 					);
 				
-				chart.selectAll(".light")
+				var door = chart.append("g")
+					.attr("class", "door")
+					.attr("transform", "translate(0, " + (chartSize.height - 20) + ")");
+				
+				door.selectAll("line")
+					.data(data.filter((record) => { return record.isDoorOpen; }))
+					.enter()
+					.append("line")
+					.attr("class", "doorStatus")
+					.attr("x1", (record) => { return convert.x(record.logTime); })
+					.attr("y1", 0)
+					.attr("x2", (record) => { return convert.x(record.logTime); })
+					.attr("y2", 10);
+				
+				door.selectAll("rect")
+					.data(data.filter((record) => { return record.hasDoorChange;  }))
+					.enter()
+					.append("rect")
+					.attr("class", "doorEvent")
+					.attr("x", (record) => { return convert.x(record.logTime) - 2; })
+					.attr("width", 2)
+					.attr("y",  1)
+					.attr("height", 1);
+				
+				var light = chart.append("g")
+					.attr("class", "light")
+					.attr("transform", "translate(0, " + (chartSize.height - 10) + ")");
+				
+				light.selectAll("line")
 					.data(data.filter((record) => { return record.isLightOn; }))
 					.enter()
 					.append("line")
 					.attr("class", "light")
 					.attr("x1", (record) => { return convert.x(record.logTime); })
-					.attr("y1", chartSize.height - 15)
+					.attr("y1", 0)
 					.attr("x2", (record) => { return convert.x(record.logTime); })
-					.attr("y2", chartSize.height - 5);
+					.attr("y2", 10);
 				
 				chart.append("g")
 					.attr("class", "axis")
