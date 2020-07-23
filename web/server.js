@@ -56,9 +56,16 @@ app.post("/api/savesensor", (request, response) => {
 });
 
 app.get("/api/sensorload", (request, response) => {
-	var filterDate = new Date();
+	var filterDate;
+	
+	if (request.query.dateEnd) {
+		filterDate = new Date(request.query.dateEnd);
+	}
+	else {
+		filterDate = new Date();
+	}
 	filterDate.setHours(filterDate.getHours() - 12);
-
+	
 	sensorModel
 		.find({
 			logTime: { $gte: filterDate }
