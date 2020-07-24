@@ -23,7 +23,13 @@ var sensorModel = mongoose.model("sensor", {
 	isLightOn: Boolean,
 	hasDoorChange: Boolean,
 	isDoorOpen: Boolean,
-	hasMotion: Boolean
+	hasMotion: Boolean,
+	isFanOn: Boolean
+});
+
+var commandModel = mongoose.model("command", {
+	type: String,
+	status: Boolean
 });
 
 // Routes =======================================================================
@@ -42,7 +48,8 @@ app.post("/api/savesensor", (request, response) => {
 		isLightOn: request.body.sensor.light == 1 ? true : false,
 		hasDoorChange: request.body.sensor.doorChange == 1 ? true : false,
 		isDoorOpen: request.body.sensor.isDoorOpen == 1 ? true : false,
-		hasMotion: request.body.sensor.motion == 1 ? true : false
+		hasMotion: request.body.sensor.motion == 1 ? true : false,
+		isFanOn: request.body.sensor.fan == 1 ? true : false
 	})
 	.save()
 	.then((sensorDB) => {
@@ -53,6 +60,32 @@ app.post("/api/savesensor", (request, response) => {
 		response.status(500).json({error: error.message});
 		response.end();
 	});
+});
+
+app.post("/api/command", (request, response) => {
+	if (!request.body.command) {
+		response.status(501).json({ error: "Command missing from request" });
+		response.end();
+		return;
+	}
+	
+	new commandModel({
+		type: request.body.command.type,
+		status: request.body.command.status
+	})
+	.save()
+	.then((commandDB) => {
+		response.status(200).json({ commandId: commandDB._id });
+		response.end();
+	})
+	.catch((error) => {
+		response.status(500).json({ error: error.message });
+		response.end();
+	});
+});
+
+app.get("/api/command", (request, response) => {
+	
 });
 
 app.get("/api/sensorload", (request, response) => {
@@ -81,7 +114,8 @@ app.get("/api/sensorload", (request, response) => {
 					isLightOn: sensorDb.isLightOn || false,
 					hasDoorChange: sensorDb.hasDoorChange || false,
 					isDoorOpen: sensorDb.isDoorOpen || false,
-					hasMotion: sensorDb.hasMotion || false
+					hasMotion: sensorDb.hasMotion || false,
+					isFanOn: sensorDb.isFanOn || false
 				};
 			});
 			

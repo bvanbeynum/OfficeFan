@@ -37,6 +37,29 @@ html {
 	align-items: center;
 }
 
+.filterDate {
+	display: flex;
+}
+
+.fanButton {
+	background-color: rgb(239, 239, 239);
+	padding: 1 6;
+	border: 1px solid rgb(118, 118, 118);
+	border-style: outset;
+	border-radius: 3px;
+	display: flex;
+	align-items: center;
+}
+
+.fanStatus {
+	width: 10px;
+	height: 10px;
+	border: 2px solid #369836;
+	background-color: rgb(167 232 167);
+	border-radius: 8px;
+	margin-right: 5px;
+}
+
 sensorchart {
 	width: 1024px;
 	height: 500px;
@@ -87,6 +110,10 @@ sensorchart .doorEvent {
 	<div class="filterDate">
 		<input type="datetime-local" ng-model="filterDate">
 		<input type="button" value="Update" ng-click="updateTime()">
+		<div class="fanButton" ng-click="setFan()">
+			<div class="fanStatus"></div>
+			Fan
+		</div>
 	</div>
 	
 	<sensorchart controller="sensorChartCtl"></sensorchart>
@@ -113,6 +140,7 @@ sensorApp.controller("sensorCtl", ($scope, $http, $window) => {
 	$scope.sensorData = [];
 	$scope.message = { text: "", active: false };
 	$scope.sensorChartCtl = {};
+	$scope.fanStatus = false;
 	
 	$scope.filterDate = new Date();
 	$scope.filterDate.setMinutes(0);
@@ -137,7 +165,8 @@ sensorApp.controller("sensorCtl", ($scope, $http, $window) => {
 						isLightOn: sensor.isLightOn,
 						hasDoorChange: sensor.hasDoorChange,
 						isDoorOpen: sensor.isDoorOpen,
-						hasMotion: sensor.hasMotion
+						hasMotion: sensor.hasMotion,
+						isFanOn: sensor.isFanOn
 					};
 				});
 				
@@ -153,6 +182,19 @@ sensorApp.controller("sensorCtl", ($scope, $http, $window) => {
 	
 	$scope.updateTime = () => {
 		$scope.loadData();
+	};
+	
+	$scope.setFan = function () {
+		$scope.fanStatus = !$scope.fanStatus;
+		
+		$http({ url: "/api/command", method: "post", data: { command: { type: "fan", status: $scope.fanStatus }} })
+			.then((response) => {
+				$scope.showMessage("info", "Fan state updated");
+			},
+			(error) => {
+				$scope.showMessage("error", "There was an error setting the fan state.");
+				console.warn("Warning", error);
+			});
 	};
 	
 	$scope.showMessage = (type, message) => {
