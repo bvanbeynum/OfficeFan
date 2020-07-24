@@ -55,10 +55,14 @@ html {
 .fanStatus {
 	width: 10px;
 	height: 10px;
-	border: 2px solid #369836;
-	background-color: rgb(167 232 167);
+	border: 2px solid rgb(204 18 18);
+	background-color: rgb(244, 174, 174);
 	border-radius: 8px;
 	margin-right: 5px;
+}
+.fanStatus.active {
+	border: 2px solid rgb(54 152 54);
+	background-color: rgb(167 232 167);
 }
 
 sensorchart {
@@ -112,7 +116,7 @@ sensorchart .doorEvent {
 		<input type="datetime-local" ng-model="filterDate">
 		<input type="button" value="Update" ng-click="updateTime()">
 		<div class="fanButton" ng-click="setFan()">
-			<div class="fanStatus"></div>
+			<div class="fanStatus" ng-class="{'active': fanStatus}"></div>
 			Fan
 		</div>
 	</div>
@@ -170,6 +174,8 @@ sensorApp.controller("sensorCtl", ($scope, $http, $window) => {
 						isFanOn: sensor.isFanOn
 					};
 				});
+				
+				$scope.fanStatus = $scope.sensorData[$scope.sensorData.length - 1].isFanOn;
 				
 				$scope.sensorChartCtl.update($scope.sensorData);
 				$scope.showMessage("info", "Data has been updated");
@@ -272,6 +278,19 @@ sensorApp.directive("sensorchart", () => {
 						.x((record) => { return convert.x(record.logTime); })
 						.y((record) => { return convert.y2(record.humidity); })
 					);
+				
+				var fan = chart.append("g")
+					.attr("class", "fanStatus")
+					.attr("transform", "translate(0, " + (chartSize.height - 40) + ")");
+				
+				fan.selectAll("rect")
+					.data(data.filter((record) => { return record.isFanOn; }))
+					.enter()
+					.append("rect")
+					.attr("x", (record) => { return convert.x(record.logTime) - 2; })
+					.attr("width", 4)
+					.attr("y", 4)
+					.attr("height", 4);
 				
 				var motion = chart.append("g")
 					.attr("class", "motion")
