@@ -28,6 +28,7 @@ var sensorModel = mongoose.model("sensor", {
 });
 
 var commandModel = mongoose.model("command", {
+	insertTime: Date,
 	type: String,
 	status: Boolean
 });
@@ -70,6 +71,7 @@ app.post("/api/command", (request, response) => {
 	}
 	
 	new commandModel({
+		insertTime: new Date(),
 		type: request.body.command.type,
 		status: request.body.command.status
 	})
@@ -85,7 +87,31 @@ app.post("/api/command", (request, response) => {
 });
 
 app.get("/api/command", (request, response) => {
-	
+	commandModel
+		.find({})
+		.sort({ insertDate: 1 })
+		.exec()
+		.then((commandsDB) => {
+			var output = commandsDB.map((commandDB) => {
+				return {
+					id: commandDB._id,
+					insertTime: commandDB.insertTime,
+					type: commandDB.type,
+					status: commandDB.status
+				};
+			});
+			
+			response.status(200).json({ commands: output });
+			response.end();
+			
+			commandModel
+				.remove({})
+				.exec();
+		})
+		.catch((error) => {
+			response.status(500).json({ error: error.message });
+			response.end();
+		});
 });
 
 app.get("/api/sensorload", (request, response) => {
