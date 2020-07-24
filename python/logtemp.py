@@ -19,7 +19,7 @@ while True:
 		data["logTime"] = datetime.datetime.today().strftime("%Y-%m-%d %H:%M:%S")
 		requests.post("http://huntingtonbeach.beynum.com:8081/api/savesensor", json = { "sensor": data })
 
-	response = requests.get("http://huntingtonbeach.beynum.com:8081/api")
+	response = requests.get("http://huntingtonbeach.beynum.com:8081/api/command")
 
 	if response:
 		commands = response.json()["commands"]
