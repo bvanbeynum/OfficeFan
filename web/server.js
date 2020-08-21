@@ -14,6 +14,7 @@ app.set("root", __dirname);
 app.use(bodyParser.json());
 
 var config = require("./config");
+console.log((new Date()) + ": Connecting to db " + config.mongo.servers.join(","));
 mongoose.connect("mongodb://" + config.mongo.user + ":" + config.mongo.pass + "@" + config.mongo.servers.join(",") + "/" + config.mongo.db + "?authSource=" + config.mongo.db, {useNewUrlParser: true});
 
 var sensorModel = mongoose.model("sensor", {
@@ -123,7 +124,7 @@ app.get("/api/sensorload", (request, response) => {
 	else {
 		filterDate = new Date();
 	}
-	filterDate.setHours(filterDate.getHours() - 12);
+	filterDate.setHours(filterDate.getHours() - 16);
 	
 	sensorModel
 		.find({

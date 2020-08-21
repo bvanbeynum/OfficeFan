@@ -1,6 +1,6 @@
 <html ng-app="sensorApp">
 <head>
-<title>Training</title>
+<title>Office Comfort Station</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 
@@ -80,6 +80,10 @@ sensorchart path, sensorchart line {
 	fill: none;
 }
 
+sensorchart .tick line {
+	stroke: rgb(240,240,240);
+}
+
 sensorchart .temp, 
 sensorchart .temp path, 
 sensorchart .temp line {
@@ -90,6 +94,10 @@ sensorchart .humidity,
 sensorchart .humidity path, 
 sensorchart .humidity line {
 	stroke: rgb(52 168 83);
+}
+
+sensorchart .fanStatus rect {
+	fill: rgb(204 18 18);
 }
 
 sensorchart line.light {
@@ -156,7 +164,7 @@ sensorApp.controller("sensorCtl", ($scope, $http, $window) => {
 		var timeString = new Date($scope.filterDate);
 		timeString.setMinutes($scope.filterDate.getMinutes() - timeString.getTimezoneOffset());
 		
-		$http({ url: "/api/sensorload?" }).then( // dateEnd=" + timeString.toISOString()
+		$http({ url: "/api/sensorload" }).then( // ?dateEnd=" + timeString.toISOString()
 			(response) => {
 				$scope.sensorData = response.data.sensor.map((sensor) => {
 					var logTime = new Date(sensor.logTime);
@@ -263,6 +271,10 @@ sensorApp.directive("sensorchart", () => {
 				var chart = svg.append("g")
 					.attr("transform", "translate(" + padding.left + ", " + padding.top + ")");
 				
+				chart.append("g")
+					.attr("class", "grid")
+					.call(d3.axisLeft(convert.y1).tickSize(-chartSize.width).tickFormat("").ticks(15));
+				
 				chart.append("path")
 					.datum(data)
 					.attr("class", "path temp")
@@ -351,12 +363,12 @@ sensorApp.directive("sensorchart", () => {
 				
 				chart.append("g")
 					.attr("class", "axis temp")
-					.call(d3.axisLeft(convert.y1));
+					.call(d3.axisLeft(convert.y1).ticks(15));
 				
 				chart.append("g")
 					.attr("class", "axis humidity")
 					.attr("transform", "translate(" + chartSize.width + ")")
-					.call(d3.axisRight(convert.y2));
+					.call(d3.axisRight(convert.y2).ticks(15));
 				
 			};
 		}
